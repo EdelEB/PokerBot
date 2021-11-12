@@ -7,7 +7,7 @@ class Deck:
         self.top = 0;
         for suit in ["Clubs", "Diamonds", "Hearts", "Spades"]:
             for val in range(2, 15):
-                self.pile.append(Card(suit, val));
+                self.pile.append(Card.Card(suit, val));
 
     def shuffle(self):
         for i in range(1000):

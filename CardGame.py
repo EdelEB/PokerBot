@@ -1,14 +1,14 @@
 
-import Player;
-import Deck;
-import sll;
+from Player import Player;
+from Deck import Deck;
+from sll import SLL;
 
 class Game:
     def __init__(self, player_count, hand_size, big_blind, limit):
         if player_count < 2: print("Error 2 players needed"); return;
         self.deck = Deck();
 
-        self.positions = sll.SLL();
+        self.positions = SLL();
         self.players = {}; # player data
         for i in range(int(player_count)):
             self.positions.add(i);
@@ -67,12 +67,15 @@ class Game:
 
     def betting(self):
         cp = self.dealer;  # current player with action
+        temp = cp.val;
 
         curr_bet = 0;
         bet_made = False;
         while True:
+
             cp = cp.next;
-            while not self.players[cp.val].status: cp = cp.next;
+            while not self.players[cp.val].status:
+                cp = cp.next;
 
             if self.players[cp.val].money_out and bet_made:
                 for p in self.players:
@@ -98,6 +101,8 @@ class Game:
                 curr_bet = bet;
                 self.players[cp.val].money_out = bet;
                 bet_made = True;
+
+            if cp.val == temp: break; # stops infinite loop
 
     def deal_hands(self):
         cp = self.dealer; # current player ; its a computer so dealing to the left of the dealer is dumb
