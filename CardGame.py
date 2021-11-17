@@ -1,20 +1,17 @@
 
 from Player import Player;
 from Deck import Deck;
-from sll import SLL;
 
 class Game:
     def __init__(self, player_count, hand_size, big_blind, limit):
         if player_count < 2: print("Error 2 players needed"); return;
         self.deck = Deck();
 
-        self.positions = SLL();
+        self.player_count = player_count
         self.players = {}; # player data
-        for i in range(int(player_count)):
-            self.positions.add(i);
+        for i in range(1, int(player_count)+1):
             self.players[i] = Player(i, big_blind * 100);
-        self.positions.tie();
-        self.dealer = self.positions.head;
+        self.dealer = self.button = 1;
 
         self.hand_size = int(hand_size);
         self.big_blind = int(big_blind);
@@ -22,101 +19,119 @@ class Game:
         self.pot = 0;
         self.com_hand = [];
 
+        self.hand_ended = False;
+
     def setup_hand(self):
-        self.dealer = self.dealer.next;
         self.deck.shuffle();
-        for player in self.players:
-            if self.players[player].stack == 0: self.players[player].status  = False;
-            else: self.players[player].status = True;
+
+        for pos in self.players:
+            if self.players[pos].stack == 0:
+                self.players[pos].fold();
+            else:
+                self.players[pos].unfold();
+
+        self.dealer = self.next_player(self.dealer);
+        self.button = self.dealer;
 
     def betting_preflop(self):
-        cp = self.dealer.next; # current player with action
+
+        ########## Initializes small and big blinds ####################################################################
+
+        cp = self.next_player(self.dealer);                              # current player = small blind
+
+        self.players[cp].money_out = self.big_blind // 2; # small blind
+
+        cp = self.next_player(cp);                                        # current player = big blind
+
+        self.players[cp].bet(self.big_blind); # big blind
+
         curr_bet = self.big_blind;
 
-        self.players[cp.val].money_out = self.big_blind // 2; # small blind
-        cp = cp.next;
-        self.players[cp.val].money_out = self.big_blind; # big blind
-        bb = cp.val; # big blind name
-        while True:
-            cp = cp.next;
-            while not self.players[cp.val].status: cp = cp.next;
+        ################################################################################################################
 
-            if self.players[cp.val].money_out == curr_bet and cp.val != bb:
+        bb = cp; # save big blind position to end betting
+        while True:
+            cp = self.next_player(cp);
+
+            # ends loop but makes sure big blind has option to raise
+            if curr_bet == self.players[cp].money_out and not (curr_bet == self.big_blind and cp == bb):
                 for p in self.players:
                     self.pot += self.players[p].money_out;
-                    self.players[p].bet(); # adjust stack size and money_out
+                    self.players[p].confirm_bet();                  # money_out = 0
                 break;
 
-            print();
-            self.players[cp.val].display_hand();
-            print("Pot:", str(self.pot), ", Bet:", str(curr_bet), "Committed:", str(self.players[cp.val].money_out),
-                  "Stack:", str(self.players[cp.val].stack));
-            bet = int(input("Player " + str(cp.val) + "'s bet (0=call, -1=fold): "));
-
-            if bet == -1:
-                self.players[cp.val].bet();
-                self.players[cp.val].status = False;
-            elif bet == 0 or bet < curr_bet: # call
-                if curr_bet > self.players[cp.val].stack:
-                    self.players[cp.val].money_out = self.players[cp.val].stack; # all-in to call
-                else:
-                    self.players[cp.val].money_out = curr_bet;
-            else:
-                curr_bet = bet;
-                self.players[cp.val].money_out = bet;
+            curr_bet = self.bet_prompt(cp, curr_bet);
 
     def betting(self):
-        cp = self.dealer;  # current player with action
-        temp = cp.val;
-
+        cp = self.next_player(self.button);  # current player with action
         curr_bet = 0;
-        bet_made = False;
+
         while True:
+            cp = self.next_player(cp);
 
-            cp = cp.next;
-            while not self.players[cp.val].status:
-                cp = cp.next;
-
-            if self.players[cp.val].money_out and bet_made:
+            if self.players[cp].money_out and curr_bet > 0:
                 for p in self.players:
                     self.pot += self.players[p].money_out;
-                    self.players[p].bet();  # adjust stack size and money_out
+                    self.players[p].confirm_bet();          # adjust stack size and money_out
                 break;
 
-            print();
-            self.display_runout();
-            self.players[cp.val].display_hand();
-            print("Pot:",str(self.pot),", Bet:",str(curr_bet),"Committed:",str(self.players[cp.val].money_out),"Stack:",str(self.players[cp.val].stack));
-            bet = int(input("Player " + str(cp.val) + "'s bet (0=call, -1=fold): "));
+            curr_bet = self.bet_prompt(cp, curr_bet);
 
-            if bet == -1:
-                self.players[cp.val].bet();
-                self.players[cp.val].status = False;
-            elif bet == 0 or bet < curr_bet:  # call
-                if curr_bet > self.players[cp.val].stack:
-                    self.players[cp.val].money_out = self.players[cp.val].stack;  # all-in to call
-                else:
-                    self.players[cp.val].money_out = curr_bet;
+            if curr_bet == 0 and cp == self.button:         # checked through
+                break;
+
+    def bet_prompt(self, cp, curr_bet):
+        print();
+        self.display_runout();
+        self.players[cp].display_hand();
+        print("Pot:", str(self.pot), "\nBet:", str(curr_bet), "\ncomitted:", str(self.players[cp].money_out),
+              "\nStack:", str(self.players[cp].stack));
+        bet = input("Player " + str(cp) + "'s: \nc=call | f=fold | Raise:  ");  # gets bet input
+
+        if bet == 'f':  # fold
+            self.players[cp].fold();
+
+            if self.players_in() == 1:
+                self.end_hand();
             else:
-                curr_bet = bet;
-                self.players[cp.val].money_out = bet;
-                bet_made = True;
+                if cp == self.button:
+                    self.shift_button();
 
-            if cp.val == temp: break; # stops infinite loop
+        elif bet == 'c':  # call
+            self.players[cp].call(curr_bet);
+        else:  # raise
+            try:
+                bet = int(bet);
+            except:
+                raise Exception("Error Invalid Input: ", bet);
+            if bet > self.players[cp].stack:  # cannot bet more than stack
+                bet = self.players[cp].stack;
+            curr_bet += bet;
+            self.players[cp].bet(curr_bet + bet - self.players[cp].money_out );
+
+        return curr_bet;
 
     def deal_hands(self):
-        cp = self.dealer; # current player ; its a computer so dealing to the left of the dealer is dumb
-        for h in self.deck.deal_table(len(self.players), self.hand_size):
-            self.players[cp.val].hand = h;
-            cp = cp.next;
+        cp = self.next_player(self.dealer);
 
-    def clear_comm(self): self.com_hand = []; # clear community hand
+        for i in range(self.hand_size):
+            for j in range(self.players_in()):
+                c = self.deck.deal_one();
+                self.players[cp].hand.append(c);
+                cp = self.next_player(cp);
 
-    def deal_comm(self, num):
+    def clear_com(self):
+        self.com_hand = []; # clear community hand
+
+    def deal_com(self, num):
         for i in range(num):
             self.com_hand.append(self.deck.deal_one());
 
     def display_runout(self):
+        if len(self.com_hand) == 0:
+            print("Preflop");
+            return;
+
         print('Runout: ',end='');
         for card in self.com_hand:
             print(card, ' ', end='');
@@ -127,4 +142,34 @@ class Game:
             print("Player",self.players[p],': ', end='');
             self.players[p].display_hand();
 
+    def end_hand(self):
+        self.clear_com();
+        self.hand_ended = True;
+        print("HAND ENDED")
+        pass;
+
+    def players_in(self):
+        count = 0;
+        for pos in self.players:
+            if self.players[pos].status:
+                count += 1;
+        return count;
+
+    def next_player(self, pos): # return next player in hand (not folded)
+        while True:
+            pos = self.next_pos(pos);
+            if self.players[pos].status:
+                return pos;
+
+    def next_pos(self, pos): # returns next position in players array
+        pos += 1;
+        if pos > len(self.players):
+            return 1;
+        return pos;
+
+    def shift_button(self):
+        while not self.players[self.button].status:
+            self.button -= 1;
+            if self.button < 1:
+                self.button = len(self.players);
 

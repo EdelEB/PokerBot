@@ -15,4 +15,4 @@ class Card:
         pass;
 
     def __str__(self):
-        return str(self.trans_val(self.val)) + self.suit[0].lower();
+        return str(self.trans_val(self.val)) + self.suit;

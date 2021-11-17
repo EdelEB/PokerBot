@@ -5,7 +5,7 @@ class Deck:
     def __init__(self):
         self.pile = [];
         self.top = 0;
-        for suit in ["Clubs", "Diamonds", "Hearts", "Spades"]:
+        for suit in ["C", "D", "H", "S"]:
             for val in range(2, 15):
                 self.pile.append(Card.Card(suit, val));
 
@@ -27,7 +27,7 @@ class Deck:
         self.top += 1;
         if self.top == 52: print("Reached end of deck. Reshuffling..."); self.shuffle();
         return temp;
-
+    '''
     def deal_table(self, positions, hand):
         if positions * hand > 52:
             print("More than 52 cards are needed for that many positions/hand sizes.")
@@ -41,7 +41,7 @@ class Deck:
             for j in range(positions):
                 hands_arr[j].append(self.deal_one());
         return hands_arr;
-
+    '''
     def __str__(self):
         for card in self.pile:
             print(card, end='|');

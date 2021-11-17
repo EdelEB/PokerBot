@@ -33,4 +33,4 @@ def test():
     dic = WeightStorage.retrieve(8);
     print(dic);
 
-test();
+#test();

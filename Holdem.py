@@ -7,28 +7,24 @@ class Holdem(CardGame.Game):
 
     def play_hand(self):
         self.setup_hand();
-        self.deal_hands()
+        self.deal_hands();
 
-        self.betting_preflop();# pre flop betting
+        self.betting_preflop();     # pre flop betting
 
-        self.deal_comm(3);      # flop
+        self.deal_com(3);           # flop
 
-        self.betting();         # flop betting
+        self.betting();             # flop betting
 
-        self.deal_comm(1);      # turn
+        self.deal_com(1);           # turn
 
-        self.betting();         # turn betting
+        self.betting();             # turn betting
 
-        self.deal_comm(1);      # river
+        self.deal_com(1);           # river
 
-        self.betting();         # river betting
-
-        self.dealer = self.dealer.next;
-        #self.dealer += 1; # move dealer chip
-        #if self.dealer == len(self.players): self.dealer = 1;
+        self.betting();             # river betting
 
 def test():
-    mygame = Holdem(2,2);
+    mygame = Holdem(5,2);
 
     mygame.play_hand();
 
