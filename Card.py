@@ -1,6 +1,8 @@
 
 class Card:
     def __init__(self, suit, val):
+        if suit != 'C' and suit != 'D' and suit != 'H' and suit != 'S':
+            raise Exception("Invalid Suit. Must be either C,D,H,S");
         self.suit = suit;
         self.val = val;
         self.img = None;

@@ -148,13 +148,6 @@ class Game:
         print("HAND ENDED")
         pass;
 
-    def players_in(self):
-        count = 0;
-        for pos in self.players:
-            if self.players[pos].status:
-                count += 1;
-        return count;
-
     def next_player(self, pos): # return next player in hand (not folded)
         while True:
             pos = self.next_pos(pos);
@@ -167,9 +160,18 @@ class Game:
             return 1;
         return pos;
 
+    def players_in(self):
+        count = 0;
+        for pos in self.players:
+            if self.players[pos].status:
+                count += 1;
+        return count;
+
     def shift_button(self):
         while not self.players[self.button].status:
             self.button -= 1;
             if self.button < 1:
                 self.button = len(self.players);
 
+    def showdown(self):
+        pass;
