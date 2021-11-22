@@ -7,6 +7,9 @@ class Card:
         self.val = val;
         self.img = None;
 
+    def get_suit(self):
+        return self.suit;
+
     def trans_val(self, val): # translate value
         if 1 < val < 11: return val;
         switch = { 11 : 'J', 12 : 'Q', 13 : 'K', 14 : 'A'}
@@ -15,6 +18,8 @@ class Card:
 
     def flip(self):
         pass;
+
+
 
     def __str__(self):
         return str(self.trans_val(self.val)) + self.suit;
