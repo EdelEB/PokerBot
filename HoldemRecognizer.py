@@ -152,6 +152,8 @@ def check_pair(vals):
             return [2, x, temp[0], temp[1], temp[2]];
     return False;
 
+########################################################################################################################
+
 def subset(sub, full):
     temp = full.copy();
     for x in sub:
@@ -165,66 +167,60 @@ def subset(sub, full):
 """
 board_pair:flush_draw:straight_draw
 """
-class DrawRecognizer(object):
+def DrawRecognizer():
+    pass;
 
-    @staticmethod
-    def hash_board(com_hand):
-        ret_hash = "";
-        com_hand = com_hand;
-        if not com_hand:
-            return;
-        else:
-            ret_hash = str(DrawRecognizer.find_board_pair(com_hand))+":"+\
-                       str(DrawRecognizer.find_straight_draws(com_hand))+":"+\
-                       str(DrawRecognizer.find_flush_draws(com_hand));
+def hash_board(com_hand):
+    ret_hash = "";
+    com_hand = com_hand;
+    if not com_hand:
+        return;
+    else:
+        ret_hash = str(board_draw_straight(com_hand))+":"+\
+                   str(board_draw_flush(com_hand))+":"+\
+                   str(board_draw_pair(com_hand));
 
-        # call all functions and make formatted string
-        # check if it is in dic
-        # if not in dic : find most similar existing case for default vals
+    # call all functions and make formatted string
+    # check if it is in dic
+    # if not in dic : find most similar existing case for default vals
 
-        return ret_hash;
+    return ret_hash;
 
-    @staticmethod
-    def find_board_pair(com_hand):
-        temp = com_hand[0].val;
-        for card in com_hand[1:]:
-            if temp == card.val:
-                return temp;
-        return 0;
+def board_draw_pair(com_hand):
+    temp = [card.val for card in com_hand];
+    for val in temp:
+        if subset([val, val], temp):
+            return True;
+    return False;
 
-    @staticmethod
-    def find_flush_draws(com_hand): #returns the number of flush draws
-        temp_arr = [0, 0, 0, 0];
-        for card in com_hand:
-            temp_suit = card.suit;
-            if      temp_suit == "Clubs":       temp_arr[0] += 1;
-            elif    temp_suit == "Diamonds":    temp_arr[1] += 1;
-            elif    temp_suit == "Hearts":      temp_arr[2] += 1;
-            else:                               temp_arr[3] += 1;
-        ret = 0;
+def board_draw_flush(com_hand):
+    dic = {
+        'C' : 0,
+        'D' : 0,
+        'H' : 0,
+        'S' : 0
+    };
+    for card in com_hand:
+        dic[card.suit] += 1;
 
-        for num in temp_arr:
-            if num > 1:
-                ret += 1;
+    if ret := [key for key in dic if dic[key] > 1]:
         return ret;
 
-    @staticmethod
-    def find_straight_draws(com_hand):
-        ret = 0;
-        val_arr = [];
-        for card in com_hand:
-            val_arr.append(card.val);
+    return False;
 
-        for i in range(1,11):
-            count = 0;
-            for j in range(i,i+5):
-                if j in val_arr:
-                    count += 1;
-            if count >= 3:
-                ret += 1;
-        return ret;
+def board_draw_straight(com_hand):
+    vals = [card.val for card in com_hand];
+    draws = 0;
 
-
+    for i in range(14, 4, -1):
+        sub = [i,i-1,i-2,i-3,i-4];
+        count = 0;
+        for val in vals:
+            if val in sub:
+                count+=1;
+        if count > 2:
+            draws+=1;
+    return draws;
 
 def test():
 
@@ -237,10 +233,16 @@ def test():
         d.shuffle();
         com = [d.deal_one(), d.deal_one(), d.deal_one(), d.deal_one(), d.deal_one()];
         hole = [d.deal_one(), d.deal_one()]
-        for card in (hole+com):
-            print(card, end=" ");
+        # for card in (hole+com):
+        #     print(card, end=" ");
+        #print();
+        #print(HandRecognizer(hole, com));
+        com2 = [d.deal_one(), d.deal_one(), d.deal_one()];
+        for card in com2: print(card, end=" ");
         print();
-        print(HandRecognizer(hole, com));
+        print("straights: ",board_draw_straight(com2));
+        print(board_draw_flush(com2));
+        print(board_draw_pair(com2));
         print();
 
     # sub = [1, 5];
