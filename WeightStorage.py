@@ -14,7 +14,7 @@ class WeightStorage(object):
     @staticmethod
     def retrieve(id_num):
         dic = {};
-        file = file = open("bot"+str(id_num)+"_weights"+".txt", 'r');
+        file = open("bot"+str(id_num)+"_weights"+".txt", 'r');
         for line in file:
             tup = line.strip().split("--"); # scenario:(fold_threshold,raise_threshold)
             dic[tup[0]] = tup[1];
