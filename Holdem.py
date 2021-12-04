@@ -23,6 +23,8 @@ class Holdem(CardGame.Game):
 
         self.betting();             # river betting
 
+        self.showdown();
+
 def test():
     mygame = Holdem(5,2);
 

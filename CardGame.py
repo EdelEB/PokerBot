@@ -37,13 +37,13 @@ class Game:
 
         ########## Initializes small and big blinds ####################################################################
 
-        cp = self.next_player(self.dealer);                              # current player = small blind
+        cp = self.next_player(self.dealer);             # current player = small blind
 
-        self.players[cp].money_out = self.big_blind // 2; # small blind
+        self.players[cp].bet(self.big_blind // 2);      # small blind
 
-        cp = self.next_player(cp);                                        # current player = big blind
+        cp = self.next_player(cp);                      # current player = big blind
 
-        self.players[cp].bet(self.big_blind); # big blind
+        self.players[cp].bet(self.big_blind);           # big blind
 
         curr_bet = self.big_blind;
 
@@ -56,58 +56,42 @@ class Game:
             # ends loop but makes sure big blind has option to raise
             if curr_bet == self.players[cp].money_out and not (curr_bet == self.big_blind and cp == bb):
                 for p in self.players:
-                    self.pot += self.players[p].money_out;
-                    self.players[p].confirm_bet();                  # money_out = 0
+                    self.players[p].confirm_bet(self);            # adjust pot, stack size, and money_out
                 break;
 
-            curr_bet = self.bet_prompt(cp, curr_bet);
+            curr_bet = self.get_move(cp, curr_bet);
 
     def betting(self):
-        cp = self.next_player(self.button);  # current player with action
+        cp = self.button;  # current player with action
         curr_bet = 0;
 
         while True:
             cp = self.next_player(cp);
 
-            if self.players[cp].money_out and curr_bet > 0:
+            if self.players[cp].money_out == curr_bet and curr_bet > 0:
                 for p in self.players:
-                    self.pot += self.players[p].money_out;
-                    self.players[p].confirm_bet();          # adjust stack size and money_out
+                    self.players[p].confirm_bet(self);          # adjust pot, stack size, and money_out
                 break;
 
-            curr_bet = self.bet_prompt(cp, curr_bet);
+            curr_bet = self.get_move(cp, curr_bet);
 
             if curr_bet == 0 and cp == self.button:         # checked through
                 break;
 
-    def bet_prompt(self, cp, curr_bet):
-        print();
-        self.display_runout();
-        self.players[cp].display_hand();
-        print("Pot:", str(self.pot), "\nBet:", str(curr_bet), "\ncomitted:", str(self.players[cp].money_out),
-              "\nStack:", str(self.players[cp].stack));
-        bet = input("Player " + str(cp) + "'s: \nc=call | f=fold | Raise:  ");  # gets bet input
+    def get_move(self, cp, curr_bet):
+
+        bet = self.players[cp].request_move(self, curr_bet);
 
         if bet == 'f':  # fold
-            self.players[cp].fold();
-
             if self.players_in() == 1:
                 self.end_hand();
-            else:
-                if cp == self.button:
-                    self.shift_button();
+            elif cp == self.button:
+                self.shift_button();
 
         elif bet == 'c':  # call
-            self.players[cp].call(curr_bet);
+            pass
         else:  # raise
-            try:
-                bet = int(bet);
-            except:
-                raise Exception("Error Invalid Input: ", bet);
-            if bet > self.players[cp].stack:  # cannot bet more than stack
-                bet = self.players[cp].stack;
-            curr_bet += bet;
-            self.players[cp].bet(curr_bet + bet - self.players[cp].money_out );
+            return curr_bet + int(bet);
 
         return curr_bet;
 
@@ -129,23 +113,23 @@ class Game:
 
     def display_runout(self):
         if len(self.com_hand) == 0:
-            print("Preflop");
+            print("|| Preflop ||");
             return;
 
-        print('Runout: ',end='');
+        print('|| Runout: ',end='');
         for card in self.com_hand:
             print(card, ' ', end='');
-        print();
+        print(' ||');
 
     def display_hands(self):
         for p in self.players:
-            print("Player",self.players[p],': ', end='');
+            print(f"Player {self.players[p]}: ", end='');
             self.players[p].display_hand();
 
     def end_hand(self):
         self.clear_com();
         self.hand_ended = True;
-        print("HAND ENDED")
+        print("HAND ENDED")             #FIXME
         pass;
 
     def next_player(self, pos): # return next player in hand (not folded)
