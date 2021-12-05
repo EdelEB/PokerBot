@@ -147,9 +147,11 @@ def check_pair(vals):
     for x in temp:
         if subset([x,x], temp):
             temp = [y for y in temp if y != x];
-            # temp.pop(temp.index(x));
-            # temp.pop(temp.index(x));
-            return [2, x, temp[0], temp[1], temp[2]];
+            ret = [2, x]
+            if temp:
+                for i in range(len(temp)):
+                    ret.append(temp[i]);
+            return ret;
     return False;
 
 ########################################################################################################################
@@ -167,24 +169,12 @@ def subset(sub, full):
 """
 board_pair:flush_draw:straight_draw
 """
-def DrawRecognizer():
-    pass;
 
-def hash_board(com_hand):
-    ret_hash = "";
-    com_hand = com_hand;
-    if not com_hand:
-        return;
-    else:
-        ret_hash = str(board_draw_straight(com_hand))+":"+\
-                   str(board_draw_flush(com_hand))+":"+\
-                   str(board_draw_pair(com_hand));
-
-    # call all functions and make formatted string
-    # check if it is in dic
-    # if not in dic : find most similar existing case for default vals
-
-    return ret_hash;
+def BoardDraws(com_hand):
+    ret = "";
+    if com_hand:
+        ret = f"{board_draw_straight(com_hand)}:{board_draw_flush(com_hand)}:{board_draw_pair(com_hand)}";
+    return ret;
 
 def board_draw_pair(com_hand):
     temp = [card.val for card in com_hand];
@@ -222,6 +212,55 @@ def board_draw_straight(com_hand):
             draws+=1;
     return draws;
 
+def HandDraws(hole, com_hand):
+    ret = "";
+    if hole:
+        ret = f"{hand_draw_straight(hole, com_hand)}:{hand_draw_flush(hole, com_hand)}:{hand_draw_overs(hole, com_hand)}";
+    return ret;
+
+def hand_draw_overs(hole, com_hand):
+    holes = [card.val for card in hole];
+    coms = [card.val for card in com_hand];
+    count = 0;
+
+    for h in holes:
+        for c in coms:
+            if h < c:
+                count -= 1;
+                break
+        count += 1;
+    return count;
+
+def hand_draw_flush(hole, com_hand):
+    dic = {
+        'C' : 0,
+        'D' : 0,
+        'H' : 0,
+        'S' : 0
+    };
+    for card in hole+com_hand:
+        dic[card.suit] += 1;
+
+    if ret := [key for key in dic if dic[key] > 3]:
+        return ret;
+
+    return False;
+
+def hand_draw_straight(hole, com_hand):
+    vals = [card.val for card in hole+com_hand];
+    draws = 0;
+
+    for i in range(14, 4, -1):
+        sub = [i,i-1,i-2,i-3,i-4];
+        count = 0;
+        for val in vals:
+            if val in sub:
+                count+=1;
+        if count > 3:
+            draws+=1;
+    return draws;
+
+
 def test():
 
     from BotHoldem import BotHoldem as BotH;
@@ -253,6 +292,6 @@ def test():
     # print(check_two_pair(arr))
     # print(arr);
     # board_pair:flush_draw:straight_draw
-test();
+#test();
 
 

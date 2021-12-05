@@ -10,20 +10,20 @@ class Holdem(CardGame.Game):
         self.deal_hands();
 
         self.betting_preflop();     # pre flop betting
-
+        if self.hand_ended: return;
         self.deal_com(3);           # flop
 
         self.betting();             # flop betting
-
+        if self.hand_ended: return;
         self.deal_com(1);           # turn
 
         self.betting();             # turn betting
-
+        if self.hand_ended: return;
         self.deal_com(1);           # river
 
         self.betting();             # river betting
-
-        self.showdown();
+        if self.hand_ended: return;
+        self.end_hand();
 
 def test():
     mygame = Holdem(5,2);

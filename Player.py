@@ -26,7 +26,7 @@ class Player:
     def discard_hand(self):
         self.hand = [];
 
-    def display_hand(self):
+    def print_hand(self):
         print("|| Hand: ", end='');
         for card in self.hand:
             print(card,' ', end='');
@@ -37,8 +37,8 @@ class Player:
 
     def request_move(self, game, curr_bet):
         print();
-        game.display_runout();
-        self.display_hand();
+        game.print_runout();
+        self.print_hand();
         print(f"|| Pot:{game.pot} || Bet:{curr_bet} || Comitted:{self.money_out} ||\n|| Player {self.name}'s Stack:{self.stack} ||");
         bet = input(f"|| c=call/check || f=fold || raise:  ");  # gets bet input
 
@@ -46,6 +46,8 @@ class Player:
             self.fold();
         elif bet == 'c':
             self.call(curr_bet);
+        elif bet == 'end':
+            game.end_game();
         else:
             try:
                 bet = int(bet);
