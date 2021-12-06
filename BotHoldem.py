@@ -9,10 +9,11 @@ import os;
 class BotHoldem(Player):
     def __init__(self, id_num, stack):
         super().__init__(f"Bot {id_num}", stack);
-        self.wfile = f"bot{id_num}_weights.txt";
+        self.wfile = f"bot{id_num}_weights.txt"; # personal bot weights
+        #self.wfile = "uni_weights.txt"; # universal weights accumulated by all bots
         self.id_num = id_num;
         self.dic = {};
-        self.dic = self.retrieveWeights(id_num);
+        self.retrieveWeights(id_num);
         self.pending = []; # used to store states that are waiting for results
 
     def __del__(self):
@@ -54,11 +55,17 @@ class BotHoldem(Player):
 
         tup = self.dic[key];
 
+
+        # There is definitely a better way to do this, but I can't worry about it right now. I know this code is
+        # repetitive and disgusting. #FIXME
         if rand < int(tup[0]):
+            self.fold();
             return 'f';  # fold
         elif rand < int(tup[1]):
+            self.call(curr_bet, game);
             return 'c';  # call
         else:
+            self.bet(game.pot, game);
             return game.pot;  # raise to ??
 
     def request_move_preflop(self, game, curr_bet):
@@ -79,10 +86,13 @@ class BotHoldem(Player):
         tup = self.dic[key];
 
         if rand < int(tup[0]):
+            self.fold();
             return 'f';  # fold
         elif rand < int(tup[1]):
+            self.call(curr_bet, game);
             return 'c';  # call
         else:
+            self.bet(game.pot, game);
             return game.pot;  # raise to ??
 
     def storeWeights(self, dic, id_num):
@@ -90,17 +100,18 @@ class BotHoldem(Player):
             for element in dic:
                 string = f"{element}--{dic[element][0]},{dic[element][1]}\n";
                 file.write(string);
+                file.truncate();
 
     def retrieveWeights(self, id_num):
         dic = {};
-        file = open(self.wfile, 'r');
-        for line in file:
-            tup = line.strip().split("--"); # scenario:(fold_threshold,raise_threshold)
-            dic[tup[0]] = tup[1].split(',');
-        file.close();
-        os.remove(self.wfile);
-        return dic;
 
+        with open(self.wfile, 'r') as file:
+            for line in file:
+                tup = line.strip().split("--"); # scenario:(fold_threshold,raise_threshold)
+                dic[tup[0]] = tup[1].split(',');
+        #file.close();
+        #os.remove(self.wfile);
+        self.dic = dic;
 
 def test():
     bot = BotHoldem(1, 100);

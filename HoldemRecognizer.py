@@ -17,7 +17,7 @@ format :
 
 def HandRecognizer(hole, board): # Card[] hole cards, Card[] community cards
 
-    if not hole: return;
+    if not hole: return [0];
 
     all_cards = hole + board;
     all_cards.sort(key=lambda temp: temp.val, reverse=True);

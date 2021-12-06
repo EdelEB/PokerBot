@@ -8,14 +8,18 @@ from BotHoldem import BotHoldem;
 
 
 class Game:
-    def __init__(self, player_count, hand_size, big_blind, limit):
-        if player_count < 2: print("Error 2 players needed"); return;
+    def __init__(self, people, hand_size, big_blind, limit, bot):
+        #if player_count < 2: print("Error 2 players needed"); return;
         self.deck = Deck();
 
-        self.player_count = player_count;
+        self.player_count = people + bot;
         self.players = {}; # player data
-        for i in range(1, int(player_count)+1):
-            self.players[i] = BotHoldem(i, big_blind * 100);
+        for i in range(1, self.player_count + 1):
+            if bot:
+                self.players[i] = BotHoldem(i, big_blind * 1000);
+                bot -= 1;
+            else:
+                self.players[i] = Player(i, big_blind * 1000);
         self.dealer = self.button = 1;
 
         self.hand_size = int(hand_size);
@@ -35,11 +39,11 @@ class Game:
 
         cp = self.next_player(self.dealer);             # current player = small blind
 
-        self.players[cp].bet(self.big_blind // 2);      # small blind
+        self.players[cp].bet(self.big_blind // 2, self);      # small blind
 
         cp = self.next_player(cp);                      # current player = big blind
 
-        self.players[cp].bet(self.big_blind);           # big blind
+        self.players[cp].bet(self.big_blind, self);           # big blind
 
         curr_bet = self.big_blind;
 
@@ -52,7 +56,7 @@ class Game:
             # ends loop but makes sure big blind has option to raise
             if curr_bet == self.players[cp].money_out and not (curr_bet == self.big_blind and cp == bb):
                 for p in self.players:
-                    self.players[p].confirm_bet(self);            # adjust pot, stack size, and money_out
+                    self.players[p].clear_money_out();            # adjust pot, stack size, and money_out
                 break;
 
             curr_bet = self.get_move(cp, curr_bet);
@@ -67,7 +71,7 @@ class Game:
 
             if self.players[cp].money_out == curr_bet and curr_bet > 0:
                 for p in self.players:
-                    self.players[p].confirm_bet(self);          # adjust pot, stack size, and money_out
+                    self.players[p].clear_money_out();          # adjust pot, stack size, and money_out
                 break;
 
             curr_bet = self.get_move(cp, curr_bet);
@@ -96,7 +100,7 @@ class Game:
         del self;
 
     def end_hand(self):
-        winner = None;
+        winner = Player("PLACEHOLDER",0 );
         if self.players_in() == 1:
             for i in self.players:
                 if self.players[i].status:
@@ -115,11 +119,8 @@ class Game:
 
         if bet == 'f':  # fold
             print(f"{name} folded");
-            if self.players_in() == 1:
-                self.end_hand();
-            elif cp == self.button:
+            if cp == self.button:
                 self.shift_button();
-
         elif bet == 'c':  # call
             print(f"{name} called/checked");
         else:  # raise
@@ -129,10 +130,13 @@ class Game:
         return curr_bet;
 
     def next_player(self, pos): # return next player in hand (not folded)
-        while True:
+
+        for count in range(self.player_count):
             pos = self.next_pos(pos);
             if self.players[pos].status:
                 return pos;
+        self.end_hand();
+        return pos;
 
     def next_pos(self, pos): # returns next position in players array
         pos += 1;
@@ -185,7 +189,7 @@ class Game:
         finals = [];
         for i in self.players:
             if self.players[i].status:
-                finals.append((self.players[i], HandRecognizer(self.players[i].hand, self.com_hand)));
+                finals.append( (self.players[i], HandRecognizer(self.players[i].hand, self.com_hand)) );
 
         winner = finals[0];
         for tup in finals:

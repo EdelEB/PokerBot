@@ -9,18 +9,18 @@ class Player:
         self.money_out = 0;
         self.status = False; # True : in hand, False : sitting out
 
-    def bet(self, num):
+    def bet(self, num, game):
         if num > self.stack: # cannot bet more than stack
             num = self.stack;
         self.stack -= num;
         self.money_out += num;
-        return num;
+        game.pot += num;
+        return self.money_out;
 
-    def call(self, num):
-        self.bet(num);
+    def call(self, num, game):
+        self.bet(num, game);
 
-    def confirm_bet(self, game):
-        game.pot += self.money_out;
+    def clear_money_out(self):
         self.money_out = 0;
 
     def discard_hand(self):
@@ -45,7 +45,7 @@ class Player:
         if bet == 'f':
             self.fold();
         elif bet == 'c':
-            self.call(curr_bet);
+            self.call(curr_bet, game);
         elif bet == 'end':
             game.end_game();
         else:
@@ -57,7 +57,7 @@ class Player:
             if bet > self.stack:  # cannot bet more than stack
                 bet = self.stack;
 
-            self.bet(curr_bet + bet - self.money_out );
+            self.bet(curr_bet + bet - self.money_out, game);
 
         return bet
 
