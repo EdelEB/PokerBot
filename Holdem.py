@@ -34,7 +34,7 @@ class Holdem(CardGame.Game):
 def test():
     mygame = Holdem( 0 ,2, 5);
 
-    for i in range(1):
+    for i in range(1000):
         mygame.play_hand();
 
 test();

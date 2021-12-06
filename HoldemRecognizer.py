@@ -78,8 +78,11 @@ def check_full(vals):
     three = check_three(vals)
     two_tup = check_two_pair(vals)
     if three and two_tup:
-        two_tup.pop(two_tup.index(three[1]));
-        return [7, three[1], two_tup[1]];
+        if two_tup[1] == three[1]:
+            return [7, three[1], two_tup[2]];
+        #two_tup.pop(two_tup.index(three[1]));
+        else:
+            return [7, three[1], two_tup[1]];
     return False;
 
 # if flush returns suit
