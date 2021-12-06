@@ -52,7 +52,7 @@ class Game:
         bb = cp; # save big blind position to end betting
         while True:
             cp = self.next_player(cp);
-
+            if self.players[cp].stack == 0: cp = self.next_player(cp);
             # ends loop but makes sure big blind has option to raise
             if curr_bet == self.players[cp].money_out and not (curr_bet == self.big_blind and cp == bb):
                 for p in self.players:
@@ -119,7 +119,9 @@ class Game:
 
         if bet == 'f':  # fold
             print(f"{name} folded");
-            if cp == self.button:
+            if self.players_in() == 1:
+                self.end_hand();
+            elif cp == self.button:
                 self.shift_button();
         elif bet == 'c':  # call
             print(f"{name} called/checked");

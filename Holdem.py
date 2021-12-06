@@ -32,8 +32,9 @@ class Holdem(CardGame.Game):
         self.end_hand();
 
 def test():
-    mygame = Holdem( 0 ,2, 2);
+    mygame = Holdem( 0 ,2, 5);
 
-    mygame.play_hand();
+    for i in range(1):
+        mygame.play_hand();
 
 test();

@@ -75,6 +75,10 @@ class BotHoldem(Player):
         elif self.hand[0].suit != self.hand[1].suit or\
         self.hand[0].val - self.hand[1].val > 2 or\
         self.hand[0].val < 5 and self.hand[1].val < 5:
+            if self.money_out == curr_bet: # handles big blind option
+                self.call(curr_bet, game);
+                return 'c';
+            self.fold();
             return 'f';
 
         key = self.makeKey(game, curr_bet);
