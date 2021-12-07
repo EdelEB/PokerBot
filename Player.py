@@ -65,6 +65,7 @@ class Player:
                 raise Exception("Error Invalid Input: ", bet);
 
             self.bet(bet, game);    #FIXME I think something is wrong with what happens when the stack is too small
+            print(f"Player {self.name} Raised to {self.money_out}");
             return self.money_out;
 
         return curr_bet;

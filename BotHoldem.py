@@ -28,12 +28,15 @@ class BotHoldem(Player):
             key = tup[0];
             move = tup[1];
             if self is winner:
-                self.dic[key][0], self.dic[key][1] = int(self.dic[key][0])+2, int(self.dic[key][1])+2 ;
+                self.dic[key][0], self.dic[key][1] = int(self.dic[key][0])-2, int(self.dic[key][1])-2 ;
             else:
-                if move == 'c' and int(self.dic[key][1]) - int(self.dic[key][0]) > 3:
-                    self.dic[key][0], self.dic[key][1] = int(self.dic[key][0])+2, int(self.dic[key][1])-2;
-
-                self.dic[key][0], self.dic[key][1] = int(self.dic[key][0]) + 2, int(self.dic[key][1]) + 2;
+                if move == 'c':
+                    if int(self.dic[key][1]) - int(self.dic[key][0]) > 3:
+                        self.dic[key][0], self.dic[key][1] = int(self.dic[key][0]) + 2, int(self.dic[key][1]) + 2;
+                    else:
+                        self.dic[key][0], self.dic[key][1] = int(self.dic[key][0])+2, int(self.dic[key][1])-2;
+                else:
+                    self.dic[key][0], self.dic[key][1] = int(self.dic[key][0]) + 2, int(self.dic[key][1]) + 2;
         self.pending = [];
 
     def makeKey(self, game, curr_bet):
@@ -54,33 +57,35 @@ class BotHoldem(Player):
 
     def request_move(self, game, curr_bet):
         if not game.com_hand:
-            return self.request_move_preflop(game, curr_bet);
-
-        key = self.makeKey(game, curr_bet);
-        if key not in self.dic:
-            self.dic[key] = [250, 500];
-
-        tup = self.dic[key];
-        if curr_bet == 0:
-            rand = randint(tup[0], 600);
+            move = self.request_move_preflop(game, curr_bet);
         else:
-            rand = randint(0, 600);
+            key = self.makeKey(game, curr_bet);
+            if key not in self.dic:
+                self.dic[key] = [250, 500];
+            tup = self.dic[key];
 
-        # There is definitely a better way to do this, but I can't worry about it right now. I know this code is
-        # repetitive and disgusting. #FIXME
-        if rand < int(tup[0]):
-            self.fold(game);
-            move = 'f';  # fold
-        elif rand < int(tup[1]):
-            self.call(curr_bet, game);
-            move = 'c';  # call
-        else:
+            # ensures bot does not fold to no bet
+            if curr_bet == self.money_out:
+                rand = randint(int(tup[0]), 600);
+            else:
+                rand = randint(0, 600);
+
+            if rand < int(tup[0]):      #fold
+                print(f"{self.name} folded to {curr_bet} raise");
+                move = 'f';
+                self.fold(game);
+            elif rand < int(tup[1]):    #call
+                print(f"{self.name} checked/called {curr_bet} raise");
+                move = 'c';
+                self.call(curr_bet, game);
+            else:
+                move = 'r';
+            self.pending.append([key, move]);
+
+        if move == 'r':
             self.bet(game.pot, game);
-            move = game.pot;  # raise to ??
-
-        self.pending.append([key, move]);
-        return move;
-
+            return self.money_out;
+        return curr_bet;
 
     def request_move_preflop(self, game, curr_bet):
         if self.hand[0].val == self.hand[1].val or\
@@ -90,8 +95,10 @@ class BotHoldem(Player):
         self.hand[0].val - self.hand[1].val > 2 or\
         self.hand[0].val < 5 and self.hand[1].val < 5:
             # if self.money_out == curr_bet: # handles big blind option
+            #     print(f"Bot {self.name} checked its option");
             #     self.call(curr_bet, game);
             #     return 'c';
+            print(f"{self.name} folded to {curr_bet} preflop");
             self.fold(game);
             return 'f';
 
@@ -104,14 +111,15 @@ class BotHoldem(Player):
         tup = self.dic[key];
 
         if rand < int(tup[0]):
+            print(f"{self.name} folded to {curr_bet} preflop");
             self.fold(game);
             move = 'f';  # fold
         elif rand < int(tup[1]):
+            print(f"{self.name} checked/called {curr_bet} raise");
             self.call(curr_bet, game);
             move = 'c';  # call
         else:
-            self.bet(game.pot, game);
-            move = game.pot;  # raise to ??
+            move = 'r'; # raise
 
         self.pending.append([key, move]);
         return move;
