@@ -3,11 +3,12 @@ import logging
 
 class Player:
     def __init__(self, name, stack):
+        self.is_bot = False;
         self.name = name;
         self.hand = [];
         self.stack = stack;
         self.money_out = 0;
-        self.status = False; # True : in hand, False : sitting out
+        self.in_hand = False;
 
     def bet(self, num, game):
         if num > self.stack: # cannot bet more than stack
@@ -18,6 +19,7 @@ class Player:
         return self.money_out;
 
     def call(self, num, game):
+        num -= self.money_out;
         self.bet(num, game);
 
     def clear_money_out(self):
@@ -26,14 +28,17 @@ class Player:
     def discard_hand(self):
         self.hand = [];
 
+    def fold(self):
+        self.in_hand = False;
+
+    def get_money_out(self):
+        return self.money_out;
+
     def print_hand(self):
         print("|| Hand: ", end='');
         for card in self.hand:
             print(card,' ', end='');
         print(" ||");
-
-    def fold(self):
-        self.status = False;
 
     def request_move(self, game, curr_bet):
         print();
@@ -44,9 +49,12 @@ class Player:
 
         if bet == 'f':
             self.fold();
+            print(f"Player {self.name} folded to {curr_bet} raise");
         elif bet == 'c':
             self.call(curr_bet, game);
+            print(f"Player {self.name} checked/called {curr_bet} raise");
         elif bet == 'end':
+            print(f"Player {self.name} Requested to End Game");
             game.end_game();
         else:
             try:
@@ -54,13 +62,10 @@ class Player:
             except:
                 raise Exception("Error Invalid Input: ", bet);
 
-            if bet > self.stack:  # cannot bet more than stack
-                bet = self.stack;
+            self.bet(bet, game);    #FIXME I think something is wrong with what happens when the stack is too small
+            return self.money_out;
 
-            self.bet(curr_bet + bet - self.money_out, game);
-
-        return bet
-
+        return curr_bet;
 
     def unfold(self):
-        self.status = True;
+        self.in_hand = True;

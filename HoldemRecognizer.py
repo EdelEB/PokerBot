@@ -15,7 +15,7 @@ format :
         high:           1 , card.val's descending
 """
 
-def HandRecognizer(hole, board): # Card[] hole cards, Card[] community cards
+def HandRanker(hole, board): # Card[] hole cards, Card[] community cards
 
     if not hole: return [0];
 
@@ -49,8 +49,10 @@ def HandRecognizer(hole, board): # Card[] hole cards, Card[] community cards
     elif check_pair(vals):
         return check_pair(vals);
     else:
-        vals = vals[0:len(vals)-3];
+        vals = vals[0:len(vals)];
         vals.insert(0,1);
+        if len(vals) > 6:
+            vals = vals[:6];
         return vals;
 
 # checks for straight flush
@@ -102,7 +104,7 @@ def flush_suit(cards):
 
     return False;
 
-def check_flush(cards): # returns flush suit
+def check_flush(cards):
     if suit := flush_suit(cards):
         ret = [6];
         for card in cards:
@@ -122,8 +124,12 @@ def check_straight(vals):
 def check_three(vals):
     for x in vals:
         if subset([x,x,x], vals):
-            temp = [y for y in vals if y != x];
-            return [4, x, temp[0], temp[1]];
+            ret = [4, x];
+            if temp := [y for y in vals if y != x]:
+                ret.append(temp[0]);
+                if len(temp) == 2:
+                    ret.append(temp[1]);
+            return ret;
     return False;
 
 def check_two_pair(vals):

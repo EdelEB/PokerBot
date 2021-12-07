@@ -1,30 +1,34 @@
 
-from Player import Player;
 from Deck import Deck;
-from HoldemRecognizer import HandRecognizer;
+from HoldemRecognizer import HandRanker;
+from Player import Player;
+from BotHoldem import BotHoldem;
+
 import logging
 logging.basicConfig(level=logging.DEBUG)
-from BotHoldem import BotHoldem;
 
 
 class Game:
     def __init__(self, people, hand_size, big_blind, limit, bot):
-        #if player_count < 2: print("Error 2 players needed"); return;
         self.deck = Deck();
-
+        self.STACK_SIZE = big_blind*1000;
         self.player_count = people + bot;
-        self.players = {}; # player data
-        for i in range(1, self.player_count + 1):
+        if self.player_count < 2:
+            print("Error 2 player minimum");
+            self.end_game();
+            return;
+        self.players = []; # player data
+        for i in range(self.player_count):
             if bot:
-                self.players[i] = BotHoldem(i, big_blind * 1000);
+                self.players.append(BotHoldem(i, self.STACK_SIZE));
                 bot -= 1;
             else:
-                self.players[i] = Player(i, big_blind * 1000);
-        self.dealer = self.button = 1;
+                self.players.append(Player(i, self.STACK_SIZE));
+        self.dealer = self.button = self.players[0];
 
-        self.hand_size = int(hand_size);
-        self.big_blind = int(big_blind);
-        self.limit = limit;
+        self.HAND_SIZE = int(hand_size);
+        self.BIG_BLIND = int(big_blind);
+        self.LIMIT = limit;
         self.pot = 0;
         self.com_hand = [];
 
@@ -35,61 +39,88 @@ class Game:
 
     def betting_preflop(self):
 
-        ########## Initializes small and big blinds ####################################################################
+        ########## Initializes blinds ##################################################################################
 
         cp = self.next_player(self.dealer);             # current player = small blind
 
-        self.players[cp].bet(self.big_blind // 2, self);      # small blind
+        cp.bet(self.BIG_BLIND // 2, self);              # small blind
 
         cp = self.next_player(cp);                      # current player = big blind
 
-        self.players[cp].bet(self.big_blind, self);           # big blind
-
-        curr_bet = self.big_blind;
+        curr_bet = cp.bet(self.BIG_BLIND, self);        # big blind
 
         ################################################################################################################
 
         bb = cp; # save big blind position to end betting
+
         while True:
             cp = self.next_player(cp);
-            if self.players[cp].stack == 0: cp = self.next_player(cp);
-            # ends loop but makes sure big blind has option to raise
-            if curr_bet == self.players[cp].money_out and not (curr_bet == self.big_blind and cp == bb):
-                for p in self.players:
-                    self.players[p].clear_money_out();            # adjust pot, stack size, and money_out
-                break;
 
-            curr_bet = self.get_move(cp, curr_bet);
-            if self.hand_ended: return;
+            if curr_bet == cp.get_money_out():
+                # this gives big blind option to raise if checks around to them
+                if cp == bb and curr_bet == self.BIG_BLIND:
+                    curr_bet = cp.request_move(self, curr_bet);
+                    continue;
+                else:
+                    self.collect_bets();
+                    return;
+
+            curr_bet = cp.request_move(self, curr_bet);
+
+            # a hand is done when the button checks or curr_bet = money_out
+
+            # cp = self.next_player(cp);
+            # if cp.stack == 0: cp = self.next_player(cp);
+            # # ends loop but makes sure big blind has option to raise
+            # if curr_bet == cp.money_out and not (curr_bet == self.BIG_BLIND and cp == bb):
+            #     for p in self.players:
+            #         p.clear_money_out();            # adjust pot, stack size, and money_out
+            #     break;
+            #
+            # curr_bet = self.get_move(cp, curr_bet);
+            # if self.hand_ended: return;
+
 
     def betting(self):
-        cp = self.button;  # current player with action
+        if not self.dealer.in_hand:
+            cp = self.next_player(self.dealer);
+        else:
+            cp = self.dealer;  # current player with action (this will be incremented immediately)
+        button = cp;
         curr_bet = 0;
 
         while True:
             cp = self.next_player(cp);
 
-            if self.players[cp].money_out == curr_bet and curr_bet > 0:
-                for p in self.players:
-                    self.players[p].clear_money_out();          # adjust pot, stack size, and money_out
-                break;
+            if cp == button and curr_bet == 0:
+                curr_bet = cp.request_move(self, curr_bet);
+                if not curr_bet:
+                    self.collect_bets();
+                    return;
+                continue;
 
-            curr_bet = self.get_move(cp, curr_bet);
-            if self.hand_ended: return;
+            if cp.money_out == curr_bet and curr_bet > 0:
+                self.collect_bets();
+                return;
 
-            if curr_bet == 0 and cp == self.button:         # checked through
-                break;
+            curr_bet = cp.request_move(self, curr_bet);
+
+            if self.hand_ended: return;             #FIXME IDK if this is necessary
 
     def clear_com(self):
         self.com_hand = []; # clear community hand
 
+    def collect_bets(self):
+        for p in self.players:
+            p.clear_money_out();
+
     def deal_hands(self):
         cp = self.next_player(self.dealer);
 
-        for i in range(self.hand_size):
+        for i in range(self.HAND_SIZE):
             for j in range(self.players_in()):
                 c = self.deck.deal_one();
-                self.players[cp].hand.append(c);
+                cp.hand.append(c);
                 cp = self.next_player(cp);
 
     def deal_com(self, num):
@@ -100,61 +131,79 @@ class Game:
         del self;
 
     def end_hand(self):
+        self.collect_bets();
         winner = Player("PLACEHOLDER",0 );
-        if self.players_in() == 1:
-            for i in self.players:
-                if self.players[i].status:
-                    winner = self.players[i];
+        if self.players_in() < 2:
+            for p in self.players:
+                if p.in_hand:
+                    winner = p;
         else:
             winner = self.showdown();
 
-        print(f"{winner.name} Won with {HandRecognizer(winner.hand, self.com_hand)}")
-        self.clear_com();
+        if winner:
+            print(f"Player {winner.name} Won with {HandRanker(winner.hand, self.com_hand)}");
+        else:
+            print("Error: NO WINNER");
+
+        for p in self.players:
+            p.discard_hand();
         self.hand_ended = True;
         print("HAND ENDED");
 
-    def get_move(self, cp, curr_bet):
-        name = self.players[cp].name;
-        bet = self.players[cp].request_move(self, curr_bet);
+        for p in self.players:
+            if p.is_bot:
+                p.adjustWeights(winner);
 
-        if bet == 'f':  # fold
-            print(f"{name} folded");
-            if self.players_in() == 1:
-                self.end_hand();
-            elif cp == self.button:
-                self.shift_button();
-        elif bet == 'c':  # call
-            print(f"{name} called/checked");
-        else:  # raise
-            print(f"{name} raised {bet}");
-            return curr_bet + int(bet);
+        winner.stack += self.pot;
+        self.pot = 0;
 
-        return curr_bet;
+    # def get_move(self, cp, curr_bet):
+    #     name = cp.name;
+    #     bet = cp.request_move(self, curr_bet);
+    #
+    #     if bet == 'f':  # fold
+    #         print(f"{name} folded");
+    #         if self.players_in() < 2:
+    #             logging.debug(f"one player left? {self.players_in()}")
+    #             self.end_hand();
+    #         elif cp == self.button:
+    #             self.shift_button();
+    #     elif bet == 'c':  # call
+    #         print(f"{name} called/checked");
+    #     else:  # raise
+    #         print(f"{name} raised {bet}");
+    #         return curr_bet + int(bet);
+    #
+    #     return curr_bet;
 
-    def next_player(self, pos): # return next player in hand (not folded)
+
+    def next_player(self, curr): # return next player in hand (not folded)
+
+        pos = self.players.index(curr);
 
         for count in range(self.player_count):
-            pos = self.next_pos(pos);
-            if self.players[pos].status:
-                return pos;
-        self.end_hand();
-        return pos;
+            pos += 1;
+            if pos >= self.player_count: pos = 0;
 
-    def next_pos(self, pos): # returns next position in players array
-        pos += 1;
-        if pos > len(self.players):
-            return 1;
-        return pos;
+            if self.players[pos].in_hand:
+                if self.players[pos] is curr:
+                    self.end_hand()
+                    return curr;
+                return self.players[pos]; # this is what I want to hit every time
+
+        logging.debug("No players in hand??");
+        self.end_hand();
+        return curr;
 
     def players_in(self):
         count = 0;
-        for pos in self.players:
-            if self.players[pos].status:
+        for p in self.players:
+            if p.in_hand:
                 count += 1;
         return count;
 
     def print_runout(self):
-        if len(self.com_hand) == 0:
+        if not self.com_hand:
             print("|| Preflop ||");
             return;
 
@@ -165,35 +214,48 @@ class Game:
 
     def print_hands(self):
         for p in self.players:
-            print(f"Player {self.players[p]}: ", end='');
-            self.players[p].print_hand();
+            print(f"Player {p}: ", end='');
+            p.print_hand();
+
+    def reset_stacks(self):
+        for p in self.players:
+            p.stack = self.STACK_SIZE;
 
     def setup_hand(self):
         self.hand_ended = False;
+        self.clear_com();
         self.deck.shuffle();
 
-        for pos in self.players:
-            if self.players[pos].stack <= 0:
-                self.players[pos].fold();
+        for p in self.players:
+            if p.stack <= 0:
+                p.fold();
             else:
-                self.players[pos].unfold();
+                p.unfold();
 
         self.dealer = self.next_player(self.dealer);
         self.button = self.dealer;
 
-    def shift_button(self):
-        while not self.players[self.button].status:
-            self.button -= 1;
-            if self.button < 1:
-                self.button = len(self.players);
+    # def shift_button(self):
+    #     count = 0;
+    #     pos = self.players.index(self.button);
+    #     while not self.button.in_hand or count > self.player_count:
+    #         pos-=1;
+    #         if pos < 0: pos = self.player_count-1;
+    #         count+=1;
+    #     self.button = self.players[pos];
+    #     return;
 
     def showdown(self):
         finals = [];
-        for i in self.players:
-            if self.players[i].status:
-                finals.append( (self.players[i], HandRecognizer(self.players[i].hand, self.com_hand)) );
+        for p in self.players:
+            if p.in_hand:
+                finals.append((p, HandRanker(p.hand, self.com_hand)));
 
-        winner = finals[0];
+        if finals:
+            winner = finals[0];
+        else:
+            return Player("ERROR: NO WINNER",0);
+
         for tup in finals:
             if tup[1] > winner[1]:
                 winner = tup;
