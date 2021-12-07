@@ -67,20 +67,6 @@ class Game:
 
             curr_bet = cp.request_move(self, curr_bet);
 
-            # a hand is done when the button checks or curr_bet = money_out
-
-            # cp = self.next_player(cp);
-            # if cp.stack == 0: cp = self.next_player(cp);
-            # # ends loop but makes sure big blind has option to raise
-            # if curr_bet == cp.money_out and not (curr_bet == self.BIG_BLIND and cp == bb):
-            #     for p in self.players:
-            #         p.clear_money_out();            # adjust pot, stack size, and money_out
-            #     break;
-            #
-            # curr_bet = self.get_move(cp, curr_bet);
-            # if self.hand_ended: return;
-
-
     def betting(self):
         if not self.dealer.in_hand:
             cp = self.next_player(self.dealer);
@@ -157,26 +143,6 @@ class Game:
         winner.stack += self.pot;
         self.pot = 0;
 
-    # def get_move(self, cp, curr_bet):
-    #     name = cp.name;
-    #     bet = cp.request_move(self, curr_bet);
-    #
-    #     if bet == 'f':  # fold
-    #         print(f"{name} folded");
-    #         if self.players_in() < 2:
-    #             logging.debug(f"one player left? {self.players_in()}")
-    #             self.end_hand();
-    #         elif cp == self.button:
-    #             self.shift_button();
-    #     elif bet == 'c':  # call
-    #         print(f"{name} called/checked");
-    #     else:  # raise
-    #         print(f"{name} raised {bet}");
-    #         return curr_bet + int(bet);
-    #
-    #     return curr_bet;
-
-
     def next_player(self, curr): # return next player in hand (not folded)
 
         pos = self.players.index(curr);
@@ -234,16 +200,6 @@ class Game:
 
         self.dealer = self.next_player(self.dealer);
         self.button = self.dealer;
-
-    # def shift_button(self):
-    #     count = 0;
-    #     pos = self.players.index(self.button);
-    #     while not self.button.in_hand or count > self.player_count:
-    #         pos-=1;
-    #         if pos < 0: pos = self.player_count-1;
-    #         count+=1;
-    #     self.button = self.players[pos];
-    #     return;
 
     def showdown(self):
         finals = [];
