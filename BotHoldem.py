@@ -54,8 +54,7 @@ class BotHoldem(Player):
 
     def request_move(self, game, curr_bet):
         if not game.com_hand:
-            move = self.request_move_preflop(game, curr_bet);
-            return move;
+            return self.request_move_preflop(game, curr_bet);
 
         key = self.makeKey(game, curr_bet);
         if key not in self.dic:
@@ -70,7 +69,7 @@ class BotHoldem(Player):
         # There is definitely a better way to do this, but I can't worry about it right now. I know this code is
         # repetitive and disgusting. #FIXME
         if rand < int(tup[0]):
-            self.fold();
+            self.fold(game);
             move = 'f';  # fold
         elif rand < int(tup[1]):
             self.call(curr_bet, game);
@@ -93,7 +92,7 @@ class BotHoldem(Player):
             # if self.money_out == curr_bet: # handles big blind option
             #     self.call(curr_bet, game);
             #     return 'c';
-            self.fold();
+            self.fold(game);
             return 'f';
 
         key = self.makeKey(game, curr_bet);
@@ -105,7 +104,7 @@ class BotHoldem(Player):
         tup = self.dic[key];
 
         if rand < int(tup[0]):
-            self.fold();
+            self.fold(game);
             move = 'f';  # fold
         elif rand < int(tup[1]):
             self.call(curr_bet, game);

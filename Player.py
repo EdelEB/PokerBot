@@ -28,8 +28,10 @@ class Player:
     def discard_hand(self):
         self.hand = [];
 
-    def fold(self):
+    def fold(self, game):
         self.in_hand = False;
+        if game.players_in() < 2:
+            game.end_hand();
 
     def get_money_out(self):
         return self.money_out;
@@ -48,11 +50,11 @@ class Player:
         bet = input(f"|| c=call/check || f=fold || raise:  ");  # gets bet input
 
         if bet == 'f':
-            self.fold();
             print(f"Player {self.name} folded to {curr_bet} raise");
+            self.fold(game);
         elif bet == 'c':
-            self.call(curr_bet, game);
             print(f"Player {self.name} checked/called {curr_bet} raise");
+            self.call(curr_bet, game);
         elif bet == 'end':
             print(f"Player {self.name} Requested to End Game");
             game.end_game();

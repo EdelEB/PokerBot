@@ -7,38 +7,34 @@ class Holdem(CardGame.Game):
 
     def play_hand(self):
         self.setup_hand();
-        self.deal_hands();
 
+        self.deal_hands();          # deals players' hole cards
         print("######################################################################################################");
         self.print_runout();
         print("######################################################################################################");
-
         self.betting_preflop();     # pre flop betting
         if self.hand_ended: return;
-        self.deal_com(3);           # flop
 
+        self.deal_com(3);           # flop
         print("######################################################################################################");
         self.print_runout();
         print("######################################################################################################");
-
         self.betting();             # flop betting
         if self.hand_ended: return;
-        self.deal_com(1);           # turn
 
+        self.deal_com(1);           # turn
         print("######################################################################################################");
         self.print_runout();
         print("######################################################################################################");
-
         self.betting();             # turn betting
         if self.hand_ended: return;
-        self.deal_com(1);           # river
 
+        self.deal_com(1);           # river
         print("######################################################################################################");
         self.print_runout();
         print("######################################################################################################");
-
         self.betting();             # river betting
-        if self.hand_ended: return;
+
         self.end_hand();
 
 def test():

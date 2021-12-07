@@ -54,6 +54,7 @@ class Game:
         bb = cp; # save big blind position to end betting
 
         while True:
+            if self.hand_ended: return;
             cp = self.next_player(cp);
 
             if curr_bet == cp.get_money_out():
@@ -119,28 +120,26 @@ class Game:
     def end_hand(self):
         self.collect_bets();
         winner = Player("PLACEHOLDER",0 );
-        if self.players_in() < 2:
+        if self.players_in() == 1:
             for p in self.players:
                 if p.in_hand:
                     winner = p;
-        else:
+            print(f"|| Winner ||\nPlayer {winner.name} Won without showdown");
+        elif self.players_in():
             winner = self.showdown();
+            print(f"|| Winner ||\nPlayer {winner.name} Won with {HandRanker(winner.hand, self.com_hand)}");
+        else:   # 0 players in
+            print("Error no players in")
 
-        if winner:
-            print(f"Player {winner.name} Won with {HandRanker(winner.hand, self.com_hand)}");
-        else:
-            print("Error: NO WINNER");
-
-        for p in self.players:
-            p.discard_hand();
-        self.hand_ended = True;
-        print("HAND ENDED");
+        winner.stack += self.pot;
 
         for p in self.players:
             if p.is_bot:
                 p.adjustWeights(winner);
+            p.discard_hand();
 
-        winner.stack += self.pot;
+        print("HAND ENDED");
+        self.hand_ended = True;
         self.pot = 0;
 
     def next_player(self, curr): # return next player in hand (not folded)
@@ -194,7 +193,7 @@ class Game:
 
         for p in self.players:
             if p.stack <= 0:
-                p.fold();
+                p.fold(self);
             else:
                 p.unfold();
 
@@ -207,12 +206,11 @@ class Game:
             if p.in_hand:
                 finals.append((p, HandRanker(p.hand, self.com_hand)));
 
-        if finals:
-            winner = finals[0];
-        else:
-            return Player("ERROR: NO WINNER",0);
+        print("\n|| Showdown ||");
 
+        winner = finals[0];
         for tup in finals:
+            print(f"Player {tup[0].name} : {tup[1]}")
             if tup[1] > winner[1]:
                 winner = tup;
         return winner[0];

@@ -127,7 +127,7 @@ def check_three(vals):
             ret = [4, x];
             if temp := [y for y in vals if y != x]:
                 ret.append(temp[0]);
-                if len(temp) == 2:
+                if len(temp) > 1:
                     ret.append(temp[1]);
             return ret;
     return False;
