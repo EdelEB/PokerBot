@@ -15,6 +15,7 @@ class BotHoldem(Player):
         self.id_num = id_num;
         self.dic = {};
         self.retrieveWeights(id_num);
+        self.ADJUSTER = 10;
 
         # used to store states that are waiting for results
         self.pending = []; # [key,move] elements
@@ -28,15 +29,15 @@ class BotHoldem(Player):
             key = tup[0];
             move = tup[1];
             if self is winner:
-                self.dic[key][0], self.dic[key][1] = int(self.dic[key][0])-2, int(self.dic[key][1])-2 ;
+                self.dic[key][0], self.dic[key][1] = int(self.dic[key][0])-self.ADJUSTER, int(self.dic[key][1])-self.ADJUSTER ;
             else:
                 if move == 'c':
-                    if int(self.dic[key][1]) - int(self.dic[key][0]) > 3:
-                        self.dic[key][0], self.dic[key][1] = int(self.dic[key][0]) + 2, int(self.dic[key][1]) + 2;
+                    if int(self.dic[key][1]) - int(self.dic[key][0]) > self.ADJUSTER*2-1:
+                        self.dic[key][0], self.dic[key][1] = int(self.dic[key][0]) + self.ADJUSTER, int(self.dic[key][1]) + self.ADJUSTER;
                     else:
-                        self.dic[key][0], self.dic[key][1] = int(self.dic[key][0])+2, int(self.dic[key][1])-2;
+                        self.dic[key][0], self.dic[key][1] = int(self.dic[key][0])+self.ADJUSTER, int(self.dic[key][1])-self.ADJUSTER;
                 else:
-                    self.dic[key][0], self.dic[key][1] = int(self.dic[key][0]) + 2, int(self.dic[key][1]) + 2;
+                    self.dic[key][0], self.dic[key][1] = int(self.dic[key][0]) + self.ADJUSTER, int(self.dic[key][1]) + self.ADJUSTER;
         self.pending = [];
 
     def makeKey(self, game, curr_bet):
@@ -53,7 +54,7 @@ class BotHoldem(Player):
         else:
             bet = ">";
 
-        return f"{bet} {hand_rank} {hand_draws} {board_draws}";
+        return f"{bet} {hand_rank[0]} {hand_draws} {board_draws}";
 
     def request_move(self, game, curr_bet):
         if not game.com_hand:
@@ -66,7 +67,10 @@ class BotHoldem(Player):
 
             # ensures bot does not fold to no bet
             if curr_bet == self.money_out:
-                rand = randint(int(tup[0]), 600);
+                if int(tup[0]) > 599:
+                    rand = 599;
+                else:
+                    rand = randint(int(tup[0]), 600);
             else:
                 rand = randint(0, 600);
 

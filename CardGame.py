@@ -206,7 +206,7 @@ class Game:
             if p.in_hand:
                 finals.append((p, HandRanker(p.hand, self.com_hand)));
 
-        print("\n|| Showdown ||");
+        print("\n\n\n|| Showdown ||<><><<><><><><<<><><><><><<><><><><><><><><><><><><>><><><><<><><><><><><>><><><><><><><><><><><><><><");
 
         winner = finals[0];
         for tup in finals:

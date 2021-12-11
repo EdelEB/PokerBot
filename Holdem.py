@@ -38,9 +38,9 @@ class Holdem(CardGame.Game):
         self.end_hand();
 
 def test():
-    mygame = Holdem( 0 ,2, 5); # (people, big blind, bots)
+    mygame = Holdem(0 ,2, 3); # (people, big blind, bots)
 
-    for i in range(10000):
+    for i in range(1000):
         print(f"################################################################################### {i} >>>>>>>>>>>>>");
         mygame.reset_stacks();
         mygame.play_hand();
