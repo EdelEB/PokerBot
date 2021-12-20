@@ -182,7 +182,7 @@ board_pair:flush_draw:straight_draw
 def BoardDraws(com_hand):
     ret = "";
     if com_hand:
-        ret = f"{board_draw_straight(com_hand)}:{board_draw_flush(com_hand)}:{board_draw_pair(com_hand)}";
+        ret = f"{board_draw_straight(com_hand)}:{len(board_draw_flush(com_hand))}:{board_draw_pair(com_hand)}";
     return ret;
 
 def board_draw_pair(com_hand):
@@ -205,7 +205,7 @@ def board_draw_flush(com_hand):
     if ret := [key for key in dic if dic[key] > 1]:
         return ret;
 
-    return False;
+    return [];
 
 def board_draw_straight(com_hand):
     vals = [card.val for card in com_hand];
@@ -224,7 +224,7 @@ def board_draw_straight(com_hand):
 def HandDraws(hole, com_hand):
     ret = "";
     if hole:
-        ret = f"{hand_draw_straight(hole, com_hand)}:{hand_draw_flush(hole, com_hand)}:{hand_draw_overs(hole, com_hand)}";
+        ret = f"{hand_draw_straight(hole, com_hand)}:{len(hand_draw_flush(hole, com_hand))}:{hand_draw_overs(hole, com_hand)}";
     return ret;
 
 def hand_draw_overs(hole, com_hand):
@@ -253,7 +253,7 @@ def hand_draw_flush(hole, com_hand):
     if ret := [key for key in dic if dic[key] > 3]:
         return ret;
 
-    return False;
+    return [];
 
 def hand_draw_straight(hole, com_hand):
     vals = [card.val for card in hole+com_hand];

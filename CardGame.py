@@ -3,9 +3,10 @@ from Deck import Deck;
 from HoldemRecognizer import HandRanker;
 from Player import Player;
 from BotHoldem import BotHoldem;
+from BotBrain import BotBrain;
 
-import logging
-logging.basicConfig(level=logging.DEBUG)
+# import logging
+# logging.basicConfig(level=logging.DEBUG)
 
 
 class Game:
@@ -18,9 +19,10 @@ class Game:
             self.end_game();
             return;
         self.players = []; # player data
+        BRAIN = BotBrain("brain.txt"); # brain used and improved by all bots playing
         for i in range(self.player_count):
             if bot:
-                self.players.append(BotHoldem(i, self.STACK_SIZE));
+                self.players.append(BotHoldem(i, self.STACK_SIZE, BRAIN));
                 bot -= 1;
             else:
                 self.players.append(Player(i, self.STACK_SIZE));
@@ -135,7 +137,7 @@ class Game:
 
         for p in self.players:
             if p.is_bot:
-                p.adjustWeights(winner);
+                p.adjust_brain(winner);
             p.discard_hand();
 
         print("HAND ENDED");
